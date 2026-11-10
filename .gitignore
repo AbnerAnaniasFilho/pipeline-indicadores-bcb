@@ -7,3 +7,6 @@ logs/
 # Arquivos temporários do Python e do pytest
 __pycache__/
 .pytest_cache/
+
+# Configurações pessoais do editor
+.vscode/
