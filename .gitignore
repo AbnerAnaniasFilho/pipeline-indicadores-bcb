@@ -1,0 +1,9 @@
+# Credenciais (nunca vão para o GitHub)
+.env
+
+# Logs gerados pelo pipeline
+logs/
+
+# Arquivos temporários do Python e do pytest
+__pycache__/
+.pytest_cache/
