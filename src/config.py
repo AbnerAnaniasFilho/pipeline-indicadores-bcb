@@ -14,6 +14,28 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+# Séries do Banco Central que o pipeline acompanha (códigos do SGS).
+SERIES = [
+    {
+        "codigo": 1,
+        "nome": "Dólar comercial (venda)",
+        "unidade": "R$",
+        "periodicidade": "diária",
+    },
+    {
+        "codigo": 432,
+        "nome": "Meta Selic definida pelo Copom",
+        "unidade": "% a.a.",
+        "periodicidade": "diária",
+    },
+    {
+        "codigo": 433,
+        "nome": "IPCA",
+        "unidade": "% no mês",
+        "periodicidade": "mensal",
+    },
+]
+
 
 def montar_url_banco():
     """Monta a URL de conexão do SQLAlchemy com as variáveis do .env."""
