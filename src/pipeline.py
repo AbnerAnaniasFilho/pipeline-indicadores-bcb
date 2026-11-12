@@ -12,7 +12,7 @@ from src.extract import extrair_serie
 from src.load import (
     buscar_ultima_data,
     criar_engine,
-    criar_tabelas,
+    criar_estrutura,
     salvar_observacoes,
     salvar_series,
 )
@@ -61,7 +61,7 @@ def processar_serie(engine, serie):
 def executar():
     """Roda o pipeline para todas as séries; a falha de uma não para as outras."""
     engine = criar_engine()
-    criar_tabelas(engine)
+    criar_estrutura(engine)
     salvar_series(engine, SERIES)
 
     falhas = 0

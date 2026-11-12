@@ -6,7 +6,8 @@ from sqlalchemy import create_engine, text
 
 from src.config import montar_url_banco
 
-ARQUIVO_SCHEMA = Path(__file__).parent.parent / "sql" / "01_schema.sql"
+PASTA_SQL = Path(__file__).parent.parent / "sql"
+ARQUIVOS_SQL = ["01_schema.sql", "02_views.sql"]
 
 SQL_UPSERT_SERIE = text(
     """
@@ -39,11 +40,17 @@ def criar_engine():
     return create_engine(montar_url_banco())
 
 
-def criar_tabelas(engine):
-    """Executa o sql/01_schema.sql, que cria as tabelas se ainda não existirem."""
-    comandos = ARQUIVO_SCHEMA.read_text(encoding="utf-8")
+def executar_arquivo_sql(engine, nome_arquivo):
+    """Executa todos os comandos de um arquivo da pasta sql/."""
+    comandos = (PASTA_SQL / nome_arquivo).read_text(encoding="utf-8")
     with engine.begin() as conexao:
         conexao.execute(text(comandos))
+
+
+def criar_estrutura(engine):
+    """Cria as tabelas e as views do projeto; pode ser chamada várias vezes."""
+    for nome_arquivo in ARQUIVOS_SQL:
+        executar_arquivo_sql(engine, nome_arquivo)
 
 
 def salvar_series(engine, series):
