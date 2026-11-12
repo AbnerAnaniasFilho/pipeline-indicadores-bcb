@@ -7,7 +7,7 @@ DROP VIEW IF EXISTS vw_dolar_diario;
 
 
 -- Dólar por dia útil, com a variação em % contra a cotação anterior e a
--- média móvel das últimas 7 cotações (a linha atual e as 6 anteriores).
+-- média móvel das últimas 7 e 30 cotações.
 CREATE VIEW vw_dolar_diario AS
 SELECT
     data,
@@ -21,7 +21,6 @@ SELECT
         AVG(valor) OVER (ORDER BY data ROWS BETWEEN 29 PRECEDING AND CURRENT ROW),
         4
     ) AS media_movel_30d
-    -- TODO (Abner): acrescente aqui a coluna media_movel_30d.
 FROM observacao
 WHERE codigo_serie = 1;
 
