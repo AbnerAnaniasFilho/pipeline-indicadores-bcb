@@ -1,6 +1,7 @@
 """Extração de séries da API SGS do Banco Central."""
 
 import logging
+import time
 from datetime import date, timedelta
 
 import pandas as pd
@@ -10,6 +11,8 @@ URL_SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados"
 FORMATO_DATA = "%d/%m/%Y"
 ANOS_POR_JANELA = 3
 TIMEOUT_SEGUNDOS = 30
+MAX_TENTATIVAS = 3
+ESPERA_BASE_SEGUNDOS = 2
 
 logger = logging.getLogger(__name__)
 
@@ -36,21 +39,35 @@ def buscar_janela(codigo, inicio, fim):
 
     Devolve a lista de dicionários da API, ou uma lista vazia quando não há
     dados no período (nesse caso a API responde com o status 404).
+    Em caso de erro, tenta de novo até MAX_TENTATIVAS vezes, esperando um
+    pouco mais a cada tentativa. Se a última também falhar, repassa o erro.
     """
+    url = URL_SGS.format(codigo=codigo)
     parametros = {
         "formato": "json",
         "dataInicial": inicio.strftime(FORMATO_DATA),
         "dataFinal": fim.strftime(FORMATO_DATA),
     }
-    resposta = requests.get(
-        URL_SGS.format(codigo=codigo),
-        params=parametros,
-        timeout=TIMEOUT_SEGUNDOS,
-    )
-    if resposta.status_code == 404:
-        return []
-    resposta.raise_for_status()
-    return resposta.json()
+    for tentativa in range(1, MAX_TENTATIVAS + 1):
+        try:
+            resposta = requests.get(url, params=parametros, timeout=TIMEOUT_SEGUNDOS)
+            if resposta.status_code == 404:
+                return []
+            resposta.raise_for_status()
+            return resposta.json()
+        except requests.RequestException as erro:
+            if tentativa == MAX_TENTATIVAS:
+                raise
+            espera = ESPERA_BASE_SEGUNDOS * tentativa
+            logger.warning(
+                "Série %s: tentativa %s de %s falhou (%s). Nova tentativa em %s s.",
+                codigo,
+                tentativa,
+                MAX_TENTATIVAS,
+                erro,
+                espera,
+            )
+            time.sleep(espera)
 
 
 def converter_resposta(dados):
@@ -68,14 +85,3 @@ def extrair_serie(codigo, data_inicial, data_final):
         logger.info("Série %s: buscando de %s a %s", codigo, inicio, fim)
         registros.extend(buscar_janela(codigo, inicio, fim))
     return converter_resposta(registros)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-    )
-    dolar = extrair_serie(1, date(2015, 1, 1), date.today())
-    logger.info("Total de observações: %s", len(dolar))
-    logger.info("Primeiras linhas:\n%s", dolar.head(3))
-    logger.info("Últimas linhas:\n%s", dolar.tail(3))

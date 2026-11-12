@@ -1,13 +1,10 @@
 """Carga dos dados no PostgreSQL com upsert."""
 
-import logging
-from datetime import date
 from pathlib import Path
 
 from sqlalchemy import create_engine, text
 
-from src.config import SERIES, montar_url_banco
-from src.extract import extrair_serie
+from src.config import montar_url_banco
 
 ARQUIVO_SCHEMA = Path(__file__).parent.parent / "sql" / "01_schema.sql"
 
@@ -32,7 +29,9 @@ SQL_UPSERT_OBSERVACAO = text(
     """
 )
 
-logger = logging.getLogger(__name__)
+SQL_ULTIMA_DATA = text(
+    "SELECT max(data) FROM observacao WHERE codigo_serie = :codigo_serie"
+)
 
 
 def criar_engine():
@@ -53,6 +52,13 @@ def salvar_series(engine, series):
         conexao.execute(SQL_UPSERT_SERIE, series)
 
 
+def buscar_ultima_data(engine, codigo_serie):
+    """Devolve a data mais recente já gravada para a série, ou None se não houver."""
+    with engine.connect() as conexao:
+        resultado = conexao.execute(SQL_ULTIMA_DATA, {"codigo_serie": codigo_serie})
+        return resultado.scalar()
+
+
 def salvar_observacoes(engine, codigo_serie, tabela):
     """Grava as observações de uma série com upsert.
 
@@ -65,20 +71,3 @@ def salvar_observacoes(engine, codigo_serie, tabela):
     with engine.begin() as conexao:
         conexao.execute(SQL_UPSERT_OBSERVACAO, registros)
     return len(registros)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-    )
-    engine = criar_engine()
-    criar_tabelas(engine)
-    salvar_series(engine, SERIES)
-
-    dolar = extrair_serie(1, date(2015, 1, 1), date.today())
-    enviadas = salvar_observacoes(engine, 1, dolar)
-
-    with engine.connect() as conexao:
-        total = conexao.execute(text("SELECT count(*) FROM observacao")).scalar()
-    logger.info("Linhas enviadas: %s | linhas na tabela: %s", enviadas, total)
