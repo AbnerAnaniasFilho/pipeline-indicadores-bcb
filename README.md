@@ -232,4 +232,4 @@ As instruções que dei ao assistente estão no arquivo `CLAUDE.md`.
 ## Contato
 
 - GitHub: [AbnerAnaniasFilho](https://github.com/AbnerAnaniasFilho)
-- LinkedIn: [Abner Ananias](www.linkedin.com/in/abnerananias)
+- LinkedIn: [AbnerAnanias](https://www.linkedin.com/in/abnerananias)
